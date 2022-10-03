@@ -39,10 +39,12 @@ function getNgrams(text, n){
 	return ngrams; 
 }
 
-exports.generateProfile = function(text, topN){
+module.exports = {
+generateProfile: function(text, topN){
 	var biGrams = getNgrams(text, 2);
 	var triGrams = getNgrams(text, 3);
 	var ngrams = merge(biGrams, triGrams);
 	var sortedNgrams = sortNgrams(ngrams);
 	return sortedNgrams.slice(0, topN);
 }
+};

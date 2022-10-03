@@ -14,60 +14,58 @@ function sortScores(scores){
 	});
 }
 
-if (process.argv.length != 3){
-	console.log("Usage npm run detect <phrase>");
-	return;
-}
-
-
 function normalizeScore(score) {
     return 1 - (score / (300) / 300);
 };
 
-var NOT_FOUND = 1000; 
+function detectLanguage(text) {
+    var NOT_FOUND = 1000; 
 
-// Loading our language profiles
-console.log("Reading Language Profiles from [language-profile.json]");
-var languageProfiles = JSON.parse(fs.readFileSync('language-profile.json', 'utf-8'));
+    // Loading our language profiles
+    console.log("Reading Language Profiles from [language-profile.json]");
+    var languageProfiles = JSON.parse(fs.readFileSync('language-profile.json', 'utf-8'));
 
-// Reading the text the user wants to detect from the input.  
-var text = process.argv[2]; 
-console.log("Determining Language for [text: ", text, "]");
+    // Reading the text the user wants to detect from the input.  
+    console.log("Determining Language for [text: ", text, "]");
 
-// Generate the ngrams from the document.  
-var documentProfile = ngramUtils.generateProfile(text, 300);
+    // Generate the ngrams from the document.  
+    var documentProfile = ngramUtils.generateProfile(text, 300);
 
-// Create an empty scores array
-var scores = Object.create(null);
+    // Create an empty scores array
+    var scores = Object.create(null);
 
-// Initialise this with 0 for each language;
-Object.keys(languageProfiles).forEach(function(language){
-	scores[language] = 0;
-})
-// Compute the out of index for each language.  
-documentProfile.forEach(function(documentNgram){
-	var documentIndex = documentNgram.index; 
-	var languages = Object.keys(languageProfiles);
+    // Initialise this with 0 for each language;
+    Object.keys(languageProfiles).forEach(function(language){
+        scores[language] = 0;
+    })
+    // Compute the out of index for each language.  
+    documentProfile.forEach(function(documentNgram){
+        var documentIndex = documentNgram.index; 
+        var languages = Object.keys(languageProfiles);
 
-	languages.forEach(function(language){
-		var languageProfile = languageProfiles[language];
-		var languageNgram = languageProfile.filter(function(languageNgram){
-			return languageNgram.ngram == documentNgram.ngram;
-		});
+        languages.forEach(function(language){
+            var languageProfile = languageProfiles[language];
+            var languageNgram = languageProfile.filter(function(languageNgram){
+                return languageNgram.ngram == documentNgram.ngram;
+            });
 
-		if (languageNgram.length == 1){
-			scores[language] +=  Math.abs(languageNgram[0].index - documentIndex);
-		} else {
-			scores[language] += NOT_FOUND;
-		}
-	});	
-});
+            if (languageNgram.length == 1){
+                scores[language] +=  Math.abs(languageNgram[0].index - documentIndex);
+            } else {
+                scores[language] += NOT_FOUND;
+            }
+        });	
+    });
 
-var sortedScores = sortScores(scores);
-sortedScores.forEach(score => {
-    score['match'] = normalizeScore(score.score)
-})
-console.log("Results ===============");
+    var sortedScores = sortScores(scores);
+    sortedScores.forEach(score => {
+        score['match'] = normalizeScore(score.score)
+    })
+    console.log("Results ===============");
 
 
-console.log(JSON.stringify(sortedScores));
+    console.log(JSON.stringify(sortedScores));
+    return sortedScores;
+}
+
+module.exports = {detectLanguage};
